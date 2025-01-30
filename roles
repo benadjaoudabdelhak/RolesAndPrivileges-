@@ -53,7 +53,7 @@ for user, role in users_roles.items():
 # Application des changements
 conn.commit()
 
-print("✅ Rôles et privilèges configurés avec succès !")
+print(" Rôles et privilèges configurés avec succès !")
 
 # Fermeture de la connexion
 cursor.close()
