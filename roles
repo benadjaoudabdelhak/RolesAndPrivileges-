@@ -1,0 +1,60 @@
+import mysql.connector
+
+# Configuration de la base de données
+db_config = {
+    "host": "localhost",
+    "user": "root",  # Assurez-vous que cet utilisateur a les droits nécessaires
+    "database": "SecureDataCorp"
+}
+
+# Connexion à la base de données
+conn = mysql.connector.connect(**db_config)
+cursor = conn.cursor()
+
+# Définition des rôles et des privilèges
+roles_privileges = {
+    "admin": [
+        "ALL PRIVILEGES ON SecureDataCorp.*"
+    ],
+    "medecin": [
+        "SELECT, INSERT, UPDATE ON SecureDataCorp.patients",
+        "SELECT, INSERT, UPDATE ON SecureDataCorp.dossiers_medicaux",
+        "SELECT ON SecureDataCorp.analyses_labo",
+        "SELECT ON SecureDataCorp.facturation"
+    ],
+    "patient": [
+        "SELECT ON SecureDataCorp.patients",
+        "SELECT ON SecureDataCorp.analyses_labo"
+    ],
+    "laborantin": [
+        "SELECT, INSERT, UPDATE ON SecureDataCorp.analyses_labo"
+    ]
+}
+
+# Création des rôles et attribution des privilèges
+for role, privileges in roles_privileges.items():
+    cursor.execute(f"CREATE ROLE IF NOT EXISTS {role}")
+    for privilege in privileges:
+        cursor.execute(f"GRANT {privilege} TO {role}")
+
+# Création d'utilisateurs et assignation des rôles
+users_roles = {
+    "user_admin": "admin",
+    "user_medecin": "medecin",
+    "user_patient": "patient",
+    "user_laborantin": "laborantin"
+}
+
+for user, role in users_roles.items():
+    cursor.execute(f"CREATE USER IF NOT EXISTS '{user}'@'localhost' IDENTIFIED BY 'password_{user}'")
+    cursor.execute(f"GRANT {role} TO '{user}'@'localhost'")
+    cursor.execute(f"SET DEFAULT ROLE {role} TO '{user}'@'localhost'")
+
+# Application des changements
+conn.commit()
+
+print("✅ Rôles et privilèges configurés avec succès !")
+
+# Fermeture de la connexion
+cursor.close()
+conn.close()
